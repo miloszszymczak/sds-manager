@@ -1,0 +1,24 @@
+# kubectl apply -k deploy/k8s
+# Obraz ustawiasz tutaj (albo: kustomize edit set image sds-app=REJESTR/sds-app:TAG).
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+namespace: sds
+resources:
+  - namespace.yaml
+  - configmap.yaml
+  - deployment.yaml
+  - service.yaml
+  - pdb.yaml
+  - hpa.yaml
+  - seed-job.yaml
+# Sekret NIE jest częścią kustomizacji — utwórz go ręcznie (patrz secret.example.yaml)
+# albo przez External Secrets / Sealed Secrets.
+images:
+  - name: sds-app
+    newName: ghcr.io/CHANGE-ME/sds-app
+    newTag: "1.0.0"
+labels:
+  - pairs:
+      app.kubernetes.io/name: sds-app
+      app.kubernetes.io/part-of: sds
+    includeSelectors: true

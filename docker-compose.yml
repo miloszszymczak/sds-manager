@@ -1,0 +1,34 @@
+# Lokalnie:
+#   docker compose up -d db          → sama baza (dla `npm run dev`)
+#   docker compose --profile full up --build   → baza + aplikacja w kontenerze (jak w Kubernetes)
+services:
+  db:
+    image: postgres:17-alpine
+    environment:
+      POSTGRES_USER: sds
+      POSTGRES_PASSWORD: sds
+      POSTGRES_DB: sds
+    ports: ["55432:5432"]
+    volumes: [pgdata:/var/lib/postgresql/data]
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U sds"]
+      interval: 2s
+      retries: 20
+
+  app:
+    build: .
+    depends_on:
+      db: { condition: service_healthy }
+    environment:
+      DATABASE_URL: postgresql://sds:sds@db:5432/sds?schema=public
+      SESSION_COOKIE_SECURE: "false"
+      ADMIN_EMAIL: admin@example.com
+      ADMIN_PASSWORD: admin-change-me
+    command: ["sh", "-c", "migrate && node dist/seed.cjs && exec node server.js"]
+    ports: ["3000:3000"]
+    read_only: true
+    tmpfs: [/tmp, "/app/.next/cache:uid=1001"]
+    profiles: [full]
+
+volumes:
+  pgdata:

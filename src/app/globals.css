@@ -1,0 +1,118 @@
+@import 'tailwindcss';
+
+@theme {
+  --color-brand-50: #eef4ff;
+  --color-brand-100: #d9e6ff;
+  --color-brand-200: #bcd3ff;
+  --color-brand-300: #8eb6ff;
+  --color-brand-400: #598eff;
+  --color-brand-500: #3366f2;
+  --color-brand-600: #2049d6;
+  --color-brand-700: #1a3aad;
+  --color-brand-800: #1b338a;
+  --color-brand-900: #1b2f6d;
+}
+
+html,
+body {
+  height: 100%;
+}
+
+body {
+  @apply bg-slate-100 text-slate-900 antialiased;
+  font-feature-settings: 'tnum';
+}
+
+/* ── Pola formularza ── */
+@utility field {
+  @apply w-full rounded-md border border-slate-300 bg-white px-3 py-2 text-sm
+         shadow-xs transition outline-none
+         focus:border-brand-500 focus:ring-2 focus:ring-brand-500/25
+         disabled:bg-slate-50 disabled:text-slate-500;
+}
+
+textarea.field {
+  @apply resize-y leading-relaxed;
+  min-height: 5rem;
+}
+
+/* Komórka tabeli edytowalnej — ramkę rysuje <td> */
+@utility cell-input {
+  @apply w-full bg-transparent px-2 py-1.5 text-sm outline-none
+         focus:bg-brand-50/60 focus:ring-1 focus:ring-inset focus:ring-brand-400;
+}
+
+/* ── Przyciski ── */
+@utility btn {
+  @apply inline-flex items-center justify-center gap-1.5 rounded-md px-3 py-1.5
+         text-sm font-medium transition select-none
+         disabled:pointer-events-none disabled:opacity-50;
+}
+
+@utility btn-primary {
+  @apply inline-flex items-center justify-center gap-1.5 rounded-md px-3 py-1.5
+         text-sm font-medium transition select-none
+         disabled:pointer-events-none disabled:opacity-50
+         bg-brand-600 text-white hover:bg-brand-700 active:bg-brand-800;
+}
+
+@utility btn-ghost {
+  @apply inline-flex items-center justify-center gap-1.5 rounded-md px-3 py-1.5
+         text-sm font-medium transition select-none
+         disabled:pointer-events-none disabled:opacity-50
+         text-slate-700 hover:bg-slate-200/70;
+}
+
+@utility btn-outline {
+  @apply inline-flex items-center justify-center gap-1.5 rounded-md px-3 py-1.5
+         text-sm font-medium transition select-none
+         disabled:pointer-events-none disabled:opacity-50
+         border border-slate-300 bg-white text-slate-700 hover:bg-slate-50;
+}
+
+@utility btn-danger {
+  @apply inline-flex items-center justify-center gap-1.5 rounded-md px-3 py-1.5
+         text-sm font-medium transition select-none
+         disabled:pointer-events-none disabled:opacity-50
+         text-red-600 hover:bg-red-50;
+}
+
+@utility badge {
+  @apply inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-xs font-medium;
+}
+
+/* ══════════════ WYDRUK / PDF ══════════════ */
+@media print {
+  @page {
+    size: A4;
+    margin: 18mm 16mm;
+  }
+  .no-print {
+    display: none !important;
+  }
+  body {
+    background: #fff;
+  }
+  .print-root {
+    margin: 0 !important;
+    padding: 0 !important;
+    max-width: none !important;
+    box-shadow: none !important;
+  }
+  .print-section {
+    break-inside: avoid;
+  }
+  h2 {
+    break-after: avoid;
+  }
+  table {
+    break-inside: auto;
+  }
+  tr {
+    break-inside: avoid;
+    break-after: auto;
+  }
+  thead {
+    display: table-header-group;
+  }
+}

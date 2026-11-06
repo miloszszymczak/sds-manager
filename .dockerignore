@@ -1,0 +1,17 @@
+node_modules
+.next
+dist
+.git
+.github
+.env
+.env.*
+.release.env
+*.log
+coverage
+docs
+deploy/k8s
+scripts
+**/*.test.ts
+*.tsbuildinfo
+.DS_Store
+.claude

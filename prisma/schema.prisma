@@ -1,0 +1,387 @@
+// Karty charakterystyki (SDS) — schemat bazy danych (PostgreSQL).
+//
+// Hierarchia domenowa:
+//   Substance (CAS)  ─┐
+//                     ├─< MixtureComponent >── Mixture ──< MixturePacket
+//                     │                          │
+//                     │                          ├─< MixtureVariant (objętość: 1 L, 0,5 L…)
+//                     │                          │        └─< Document (SDS: jeden na opakowanie wariantu)
+//                     │                          └─< DilutionStep (roztwór roboczy → opcjonalna karta)
+//   Product (zestaw do sprzedaży) ──< ProductItem >── MixtureVariant
+//
+// Treść karty: 16 × Section.data (jsonb) + Component (sekcja 3, kopia danych
+// substancji z chwili wydania — karta jest dokumentem prawnym, nie widokiem).
+
+generator client {
+  provider      = "prisma-client-js"
+  binaryTargets = ["native", "linux-musl-openssl-3.0.x", "linux-musl-arm64-openssl-3.0.x"]
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ─────────────────────────────────────────────────────────────
+//  UŻYTKOWNICY, SESJE, BLOKADY EDYCJI
+// ─────────────────────────────────────────────────────────────
+
+enum Role {
+  ADMIN // zarządza użytkownikami, może przejąć blokadę
+  EDITOR // tworzy i edytuje
+  VIEWER // tylko podgląd i eksport
+}
+
+model User {
+  id           String    @id @default(cuid())
+  email        String    @unique
+  name         String
+  passwordHash String
+  role         Role      @default(EDITOR)
+  active       Boolean   @default(true)
+  lastLoginAt  DateTime?
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+
+  sessions         Session[]
+  locks            EditLock[]
+  updatedDocuments Document[] @relation("DocumentUpdatedBy")
+}
+
+/// Sesja logowania. `id` to SHA-256 tokenu z ciasteczka — sam token nie trafia do bazy.
+model Session {
+  id        String   @id
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+
+  @@index([userId])
+  @@index([expiresAt])
+}
+
+/// Blokada edycji z dzierżawą (lease). `resource` = "document:<id>" | "mixture:<id>".
+/// Właściciel odnawia dzierżawę heartbeatem; po wygaśnięciu blokadę może przejąć inny użytkownik.
+model EditLock {
+  resource   String   @id
+  userId     String
+  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  acquiredAt DateTime @default(now())
+  expiresAt  DateTime
+
+  @@index([userId])
+}
+
+// ─────────────────────────────────────────────────────────────
+//  SUBSTANCJE (CAS jako identyfikator główny)
+// ─────────────────────────────────────────────────────────────
+
+model Substance {
+  /// Numer CAS — klucz główny (walidowany cyfrą kontrolną)
+  cas              String    @id
+  name             String
+  nameEn           String?
+  ecNumber         String?
+  indexNumber      String?
+  reachNumber      String?
+  molecularFormula String?
+  molarMass        String?
+  /// Gęstość [g/ml] — do przeliczenia składników podawanych w ml na masę
+  density          Float?
+  isSvhc           Boolean   @default(false)
+  sclNotes         String?
+  notes            String?
+  /// { nds, ndsch, ndsp, uwagi }
+  exposureLimits   Json?
+  /// Śledzenie aktualności danych regulacyjnych
+  lastVerified     DateTime?
+  sourceRef        String?
+  createdAt        DateTime  @default(now())
+  updatedAt        DateTime  @updatedAt
+
+  hazards           SubstanceHazard[]
+  mixtureComponents MixtureComponent[]
+  sdsComponents     Component[]
+
+  @@index([name])
+}
+
+/// Klasa zagrożenia substancji z danymi ilościowymi dla silnika klasyfikacji (CLP zał. I).
+model SubstanceHazard {
+  id           String    @id @default(cuid())
+  substanceCas String
+  substance    Substance @relation(fields: [substanceCas], references: [cas], onDelete: Cascade, onUpdate: Cascade)
+
+  hazardClass    String
+  statement      String?
+  mFactorAcute   Float?
+  mFactorChronic Float?
+  ateOral        Float?
+  ateDermal      Float?
+  ateInhalDust   Float?
+  ateInhalVapour Float?
+  sclMin         Float?
+  sclStatement   String?
+  note           String?
+  position       Int     @default(0)
+
+  @@index([substanceCas])
+}
+
+// ─────────────────────────────────────────────────────────────
+//  MIESZANINY, OPAKOWANIA, WARIANTY OBJĘTOŚCIOWE
+// ─────────────────────────────────────────────────────────────
+
+/// Mieszanina chemiczna (receptura), np. „Wywoływacz D-76”.
+/// Ilości składników odnoszą się do `basisVolumeMl` gotowego roztworu.
+model Mixture {
+  id            String   @id @default(cuid())
+  name          String
+  code          String?  @unique
+  description   String?
+  /// POWDER | LIQUID | PASTE
+  form          String   @default("POWDER")
+  basisVolumeMl Float    @default(1000)
+  notes         String?
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  packets    MixturePacket[]
+  components MixtureComponent[]
+  variants   MixtureVariant[]
+  dilutions  DilutionStep[]
+}
+
+/// Opakowanie jednostkowe mieszaniny (torebka/butelka), np. „część A”.
+/// Mieszanina jednoskładnikowa ma jedno opakowanie. Każde opakowanie wariantu ma własną kartę.
+model MixturePacket {
+  id        String  @id @default(cuid())
+  mixtureId String
+  mixture   Mixture @relation(fields: [mixtureId], references: [id], onDelete: Cascade)
+  /// Krótka etykieta, np. "A"; pusta dla mieszaniny jednoopakowaniowej
+  label     String  @default("")
+  name      String?
+  position  Int     @default(0)
+
+  components MixtureComponent[]
+  documents  Document[]
+
+  @@unique([mixtureId, label])
+}
+
+model MixtureComponent {
+  id           String        @id @default(cuid())
+  mixtureId    String
+  mixture      Mixture       @relation(fields: [mixtureId], references: [id], onDelete: Cascade)
+  packetId     String
+  packet       MixturePacket @relation(fields: [packetId], references: [id], onDelete: Cascade)
+  substanceCas String
+  substance    Substance     @relation(fields: [substanceCas], references: [cas], onUpdate: Cascade)
+  /// Ilość na `basisVolumeMl` roztworu
+  quantity     Float         @default(0)
+  /// "g" | "ml"
+  unit         String        @default("g")
+  note         String?
+  position     Int           @default(0)
+
+  @@index([mixtureId])
+  @@index([packetId])
+  @@index([substanceCas])
+}
+
+/// Wariant objętościowy mieszaniny (np. na 1 L, na 0,5 L) — skaluje ilości składników.
+model MixtureVariant {
+  id        String   @id @default(cuid())
+  mixtureId String
+  mixture   Mixture  @relation(fields: [mixtureId], references: [id], onDelete: Cascade)
+  volumeMl  Float
+  sku       String?  @unique
+  createdAt DateTime @default(now())
+
+  documents    Document[]
+  productItems ProductItem[]
+
+  @@unique([mixtureId, volumeMl])
+}
+
+/// Roztwór roboczy: wszystkie opakowania mieszaniny + woda.
+model DilutionStep {
+  id         String    @id @default(cuid())
+  mixtureId  String
+  mixture    Mixture   @relation(fields: [mixtureId], references: [id], onDelete: Cascade)
+  name       String
+  /// Woda dodana do `basisVolumeMl` [ml]
+  waterMl    Float     @default(0)
+  documentId String?   @unique
+  document   Document? @relation("DilutionDocument", fields: [documentId], references: [id], onDelete: SetNull)
+  position   Int       @default(0)
+
+  @@index([mixtureId])
+}
+
+// ─────────────────────────────────────────────────────────────
+//  PRODUKTY (zestawy do sprzedaży)
+// ─────────────────────────────────────────────────────────────
+
+model Product {
+  id          String   @id @default(cuid())
+  name        String
+  sku         String?  @unique
+  description String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  items ProductItem[]
+}
+
+model ProductItem {
+  id        String         @id @default(cuid())
+  productId String
+  product   Product        @relation(fields: [productId], references: [id], onDelete: Cascade)
+  variantId String
+  variant   MixtureVariant @relation(fields: [variantId], references: [id], onDelete: Restrict)
+  quantity  Int            @default(1)
+  position  Int            @default(0)
+
+  @@unique([productId, variantId])
+  @@index([variantId])
+}
+
+// ─────────────────────────────────────────────────────────────
+//  KARTA CHARAKTERYSTYKI
+// ─────────────────────────────────────────────────────────────
+
+enum DocumentStatus {
+  SZKIC
+  DO_PRZEGLADU
+  ZATWIERDZONA
+}
+
+model Document {
+  id           String         @id @default(cuid())
+  productName  String
+  otherNames   String?
+  ufi          String?
+  version      String         @default("1.0")
+  status       DocumentStatus @default(SZKIC)
+  issueDate    DateTime       @default(now())
+  revisionDate DateTime?
+  language     String         @default("pl")
+  notes        String?
+
+  supplierId String?
+  supplier   Supplier? @relation(fields: [supplierId], references: [id], onDelete: SetNull)
+
+  /// Karta opakowania wariantu (null = karta samodzielna lub roztworu roboczego)
+  variantId String?
+  variant   MixtureVariant? @relation(fields: [variantId], references: [id], onDelete: SetNull)
+  packetId  String?
+  packet    MixturePacket?  @relation(fields: [packetId], references: [id], onDelete: SetNull)
+  dilution  DilutionStep?   @relation("DilutionDocument")
+
+  updatedById String?
+  updatedBy   User?   @relation("DocumentUpdatedBy", fields: [updatedById], references: [id], onDelete: SetNull)
+
+  sections   Section[]
+  components Component[]
+  snapshots  DocumentSnapshot[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([variantId, packetId])
+  @@index([productName])
+}
+
+/// Jedna z 16 sekcji karty; `data` mapuje klucze pól (src/lib/schema/sections.ts) na wartości.
+model Section {
+  id         String   @id @default(cuid())
+  documentId String
+  document   Document @relation(fields: [documentId], references: [id], onDelete: Cascade)
+  number     Int
+  data       Json     @default("{}")
+  updatedAt  DateTime @updatedAt
+
+  @@unique([documentId, number])
+}
+
+/// Składnik mieszaniny w sekcji 3 karty.
+model Component {
+  id               String     @id @default(cuid())
+  documentId       String
+  document         Document   @relation(fields: [documentId], references: [id], onDelete: Cascade)
+  substanceCas     String?
+  substance        Substance? @relation(fields: [substanceCas], references: [cas], onDelete: SetNull, onUpdate: Cascade)
+  name             String
+  casNumber        String?
+  ecNumber         String?
+  indexNumber      String?
+  reachNumber      String?
+  concentration    String?
+  hazardClasses    String[]   @default([])
+  hazardStatements String[]   @default([])
+  sclNotes         String?
+  isSvhc           Boolean    @default(false)
+  position         Int        @default(0)
+
+  @@index([documentId])
+}
+
+/// Niezmienna migawka wydanej wersji karty.
+model DocumentSnapshot {
+  id         String   @id @default(cuid())
+  documentId String
+  document   Document @relation(fields: [documentId], references: [id], onDelete: Cascade)
+  version    String
+  payload    Json
+  note       String?
+  createdBy  String?
+  createdAt  DateTime @default(now())
+
+  @@index([documentId])
+}
+
+model Supplier {
+  id         String     @id @default(cuid())
+  name       String
+  street     String?
+  postalCode String?
+  city       String?
+  country    String     @default("Polska")
+  phone      String?
+  email      String?
+  website    String?
+  bdo        String?
+  documents  Document[]
+  createdAt  DateTime   @default(now())
+}
+
+model SectionTemplate {
+  id        String   @id @default(cuid())
+  name      String
+  section   Int
+  data      Json     @default("{}")
+  createdAt DateTime @default(now())
+
+  @@index([section])
+}
+
+// ─────────────────────────────────────────────────────────────
+//  SŁOWNIKI
+// ─────────────────────────────────────────────────────────────
+
+model WasteCode {
+  code          String  @id
+  descriptionPl String
+  isHazardous   Boolean @default(false)
+}
+
+model LegalReference {
+  id           String    @id @default(cuid())
+  title        String
+  journalRef   String?
+  category     String    @default("KRAJOWE")
+  sortOrder    Int       @default(0)
+  isActive     Boolean   @default(true)
+  lastVerified DateTime?
+}

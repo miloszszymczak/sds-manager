@@ -1,0 +1,11 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: sds-app
+data:
+  NODE_ENV: production
+  # Ciasteczko sesji tylko po HTTPS (TLS kończy się na Traefiku).
+  SESSION_COOKIE_SECURE: "true"
+  # Gdy publiczna domena różni się od nagłówka Host widzianego przez pod,
+  # wpisz ją tutaj (np. "sds.example.com"), inaczej akcje serwerowe zostaną odrzucone.
+  SERVER_ACTIONS_ALLOWED_ORIGINS: ""
