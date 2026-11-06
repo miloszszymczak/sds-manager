@@ -78,11 +78,7 @@ Testy: `npm test` (jednostkowe + walidacja manifestów). Testy integracyjne blok
 ## Wdrożenie w Kubernetes
 
 Obraz (`Dockerfile`) zawiera serwer Next.js (standalone), Prisma CLI i zbudowany seed; działa jako
-użytkownik 1001 z systemem plików tylko do odczytu.
-
-```bash
-docker build -t REJESTR/sds-app:1.0.0 . && docker push REJESTR/sds-app:1.0.0
-```
+użytkownik 1001 z systemem plików tylko do odczytu. Obrazy publikuje `npm run release` (niżej).
 
 1. **Sekret** z połączeniem do bazy (Twojej) i kontem startowym — szablon w `deploy/k8s/secret.example.yaml`:
    ```bash
@@ -93,7 +89,7 @@ docker build -t REJESTR/sds-app:1.0.0 . && docker push REJESTR/sds-app:1.0.0
      --from-literal=ADMIN_PASSWORD='silne-haslo' \
      --from-literal=NEXT_SERVER_ACTIONS_ENCRYPTION_KEY="$(openssl rand -base64 32)"
    ```
-2. Ustaw obraz w `deploy/k8s/kustomization.yaml` (`images:`) i wdroż: `kubectl apply -k deploy/k8s`.
+2. Wydaj obraz (`npm run release` — ustawia też obraz i tag w `deploy/k8s/kustomization.yaml`) i wdroż: `kubectl apply -k deploy/k8s`.
 3. **IngressRoute** (Traefik) kieruj na `Service sds-app`, port `http` (przykład: `deploy/k8s/ingressroute.example.yaml`).
    Jeśli publiczna domena różni się od nagłówka `Host` docierającego do poda, wpisz ją
    w `SERVER_ACTIONS_ALLOWED_ORIGINS` (ConfigMap).
@@ -108,6 +104,27 @@ Co zostanie utworzone:
 
 Repliki są bezstanowe (sesje i blokady w bazie) — sticky sessions nie są potrzebne.
 Po wdrożeniu nowej wersji otwarte karty przeglądarki starej wersji poproszą o odświeżenie.
+
+## Wydawanie nowych wersji
+
+Jednorazowo: `cp .release.env.example .release.env`, wpisz `IMAGE_REPO` (np. `ghcr.io/twoj-login/sds-app`),
+zaloguj się do rejestru (`docker login …`) i dodaj zdalne repozytorium (`git remote add origin …`).
+
+```bash
+npm run release            # 1.0.4 → 1.0.5 (patch, domyślnie)
+npm run release -- minor   # 1.0.4 → 1.1.0
+npm run release -- major   # 1.0.4 → 2.0.0
+npm run release:dry        # plan bez zmian
+```
+
+Skrypt (`scripts/release.sh`) wymaga czystej gałęzi `master` zgodnej ze zdalną, uruchamia lint, typecheck i testy,
+buduje obraz (`docker buildx`, platformy z `PLATFORMS`) z tagami `X.Y.Z`, `X.Y` i `latest` i wypycha go,
+a dopiero potem podbija wersję w `package.json` i `deploy/k8s/kustomization.yaml`, tworzy commit
+`release: vX.Y.Z` z tagiem `vX.Y.Z` i wypycha gałąź oraz tag — nieudany build nie zostawia commita.
+Wersja jest zapisana w etykietach OCI obrazu i zwracana przez `/api/health` (`version`, `revision`),
+więc po wdrożeniu widać, która wersja działa.
+
+Praca nad zmianami: gałąź tematyczna → commit → merge do `master` → push; wydanie z `master`.
 
 ## Dane startowe
 
