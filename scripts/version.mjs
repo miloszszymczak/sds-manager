@@ -1,6 +1,11 @@
 // Pomocniki wydań (bez zależności): wersjonowanie SemVer i tag obrazu w kustomizacji.
 
-/** Następna wersja: patch (domyślnie) | minor | major | jawna "X.Y.Z". */
+/**
+ * Następna wersja: patch (domyślnie) | minor | major | jawna "X.Y.Z".
+ * @param {string} current
+ * @param {string} [level]
+ * @returns {string}
+ */
 export function nextVersion(current, level = 'patch') {
   const m = /^(\d+)\.(\d+)\.(\d+)$/.exec(current);
   if (!m) throw new Error(`Nieprawidłowa bieżąca wersja: ${current}`);
@@ -17,6 +22,7 @@ export function nextVersion(current, level = 'patch') {
   }
 }
 
+/** @param {string} a @param {string} b */
 export function compare(a, b) {
   const pa = a.split('.').map(Number);
   const pb = b.split('.').map(Number);
@@ -24,7 +30,12 @@ export function compare(a, b) {
   return 0;
 }
 
-/** Ustawia newName/newTag obrazu `sds-app` w kustomization.yaml (zachowuje resztę pliku). */
+/**
+ * Ustawia newName/newTag obrazu `sds-app` w kustomization.yaml (zachowuje resztę pliku).
+ * @param {string} yaml
+ * @param {{ name?: string, tag: string }} image
+ * @returns {string}
+ */
 export function setKustomizeImage(yaml, { name, tag }) {
   const block = /(-\s+name:\s*sds-app\s*\n\s+newName:\s*)([^\n]+)(\n\s+newTag:\s*)([^\n]+)/;
   if (!block.test(yaml)) throw new Error('Nie znaleziono wpisu obrazu sds-app w kustomization.yaml');

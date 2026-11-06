@@ -40,7 +40,7 @@ done
 
 say() { printf '\033[1;34m→\033[0m %s\n' "$*"; }
 die() { printf '\033[1;31m✗ %s\033[0m\n' "$*" >&2; exit 1; }
-run() { if (( DRY_RUN )); then printf '  [dry-run] %s\n' "$*"; else "$@"; fi; }
+run() { if (( DRY_RUN )); then printf '  [dry-run] %s\n' "$*" >&2; else "$@"; fi; }
 
 # ── kontrole ──
 [[ -n "$IMAGE_REPO" ]] || die "Ustaw IMAGE_REPO (np. ghcr.io/twoj-login/sds-app) w .release.env"
