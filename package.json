@@ -1,6 +1,6 @@
 {
   "name": "sds-app",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "private": true,
   "description": "Edytor kart charakterystyki (SDS) zgodnych z rozporządzeniem (WE) nr 1907/2006 i (UE) 2020/878",
   "scripts": {

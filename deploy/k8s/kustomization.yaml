@@ -15,8 +15,8 @@ resources:
 # albo przez External Secrets / Sealed Secrets.
 images:
   - name: sds-app
-    newName: ghcr.io/CHANGE-ME/sds-app
-    newTag: "1.0.0"
+    newName: git.mwsz.org/milek/sds-manager
+    newTag: "1.0.1"
 labels:
   - pairs:
       app.kubernetes.io/name: sds-app
