@@ -1,0 +1,17 @@
+# Przykład (nie jest częścią kustomizacji — przygotowujesz własny IngressRoute).
+# Wymagania aplikacji: przekazanie nagłówka Host (domyślne w Traefiku) i HTTPS.
+apiVersion: traefik.io/v1alpha1
+kind: IngressRoute
+metadata:
+  name: sds-app
+  namespace: sds
+spec:
+  entryPoints: [websecure]
+  routes:
+    - match: Host(`sds.example.com`)
+      kind: Rule
+      services:
+        - name: sds-app
+          port: http
+  tls:
+    certResolver: letsencrypt

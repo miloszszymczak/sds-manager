@@ -1,0 +1,52 @@
+{
+  "name": "sds-app",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Edytor kart charakterystyki (SDS) zgodnych z rozporządzeniem (WE) nr 1907/2006 i (UE) 2020/878",
+  "scripts": {
+    "dev": "next dev",
+    "build": "prisma generate && next build",
+    "build:seed": "esbuild prisma/seed.ts --bundle --platform=node --target=node22 --format=cjs --outfile=dist/seed.cjs --external:@prisma/client",
+    "start": "next start",
+    "lint": "eslint .",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "db:up": "docker compose up -d db",
+    "db:migrate": "prisma migrate dev",
+    "db:deploy": "prisma migrate deploy",
+    "db:seed": "tsx prisma/seed.ts",
+    "db:studio": "prisma studio"
+  },
+  "prisma": {
+    "seed": "tsx prisma/seed.ts"
+  },
+  "dependencies": {
+    "@prisma/client": "^6.1.0",
+    "jszip": "^3.10.1",
+    "next": "^15.1.3",
+    "react": "^19.0.0",
+    "react-dom": "^19.0.0",
+    "server-only": "^0.0.1",
+    "zod": "^3.25.76"
+  },
+  "devDependencies": {
+    "@eslint/eslintrc": "^3.3.7",
+    "@tailwindcss/postcss": "^4.0.0",
+    "@types/node": "^22.10.2",
+    "@types/react": "^19.0.2",
+    "@types/react-dom": "^19.0.2",
+    "esbuild": "^0.25.12",
+    "eslint": "^9.39.5",
+    "eslint-config-next": "^15.5.23",
+    "prisma": "^6.1.0",
+    "tailwindcss": "^4.0.0",
+    "tsx": "^4.19.2",
+    "typescript": "^5.7.2",
+    "vitest": "^2.1.9",
+    "yaml": "^2.9.1"
+  },
+  "engines": {
+    "node": ">=20.9"
+  }
+}
