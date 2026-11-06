@@ -25,6 +25,12 @@ RUN npm install --prefix /opt/prisma --no-audit --no-fund --omit=dev \
       "prisma@$(node -p "require('prisma/package.json').version")"
 
 FROM node:${NODE_VERSION}-alpine AS runner
+ARG APP_VERSION=dev
+ARG GIT_SHA=unknown
+LABEL org.opencontainers.image.title="sds-app" \
+      org.opencontainers.image.description="Edytor kart charakterystyki (SDS)" \
+      org.opencontainers.image.version="${APP_VERSION}" \
+      org.opencontainers.image.revision="${GIT_SHA}"
 WORKDIR /app
 RUN apk add --no-cache openssl tini \
  && addgroup -S -g 1001 app && adduser -S -u 1001 -G app app
@@ -34,7 +40,9 @@ ENV NODE_ENV=production \
     PRISMA_HIDE_UPDATE_MESSAGE=1 \
     HOSTNAME=0.0.0.0 \
     PORT=3000 \
-    HOME=/tmp
+    HOME=/tmp \
+    APP_VERSION=${APP_VERSION} \
+    GIT_SHA=${GIT_SHA}
 
 # Serwer Next.js (standalone zawiera już @prisma/client i silnik zapytań)
 COPY --from=build --chown=app:app /app/.next/standalone ./

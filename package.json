@@ -16,7 +16,9 @@
     "db:migrate": "prisma migrate dev",
     "db:deploy": "prisma migrate deploy",
     "db:seed": "tsx prisma/seed.ts",
-    "db:studio": "prisma studio"
+    "db:studio": "prisma studio",
+    "release": "bash scripts/release.sh",
+    "release:dry": "bash scripts/release.sh --dry-run"
   },
   "prisma": {
     "seed": "tsx prisma/seed.ts"
