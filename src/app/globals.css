@@ -36,6 +36,18 @@ textarea.field {
   min-height: 5rem;
 }
 
+/* Pola tekstowe rosną razem z treścią (Chrome/Safari; w pozostałych zostaje uchwyt zmiany rozmiaru). */
+textarea {
+  field-sizing: content;
+}
+
+/* Kompaktowe pole w wierszu tabeli z widoczną ramką (receptury, zestawy) */
+@utility cell-field {
+  @apply w-full rounded-md border border-slate-200 bg-white px-2 py-1 text-sm outline-none transition
+         hover:border-slate-300 focus:border-brand-500 focus:ring-2 focus:ring-brand-500/20
+         disabled:border-transparent disabled:bg-transparent;
+}
+
 /* Komórka tabeli edytowalnej — ramkę rysuje <td> */
 @utility cell-input {
   @apply w-full bg-transparent px-2 py-1.5 text-sm outline-none

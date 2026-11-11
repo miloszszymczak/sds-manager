@@ -70,7 +70,11 @@ export const getCurrentUser = cache(async (): Promise<CurrentUser | null> => {
   return { id, email, name, role };
 });
 
-/** Okresowe sprzątanie wygasłych sesji (wywoływane przy logowaniu). */
+/** Okresowe sprzątanie wygasłych sesji i porzuconych blokad edycji (wywoływane przy logowaniu). */
 export async function purgeExpiredSessions(): Promise<void> {
-  await prisma.session.deleteMany({ where: { expiresAt: { lt: new Date() } } });
+  const now = new Date();
+  await prisma.$transaction([
+    prisma.session.deleteMany({ where: { expiresAt: { lt: now } } }),
+    prisma.editLock.deleteMany({ where: { expiresAt: { lt: now } } }),
+  ]);
 }

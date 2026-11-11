@@ -105,6 +105,20 @@ Co zostanie utworzone:
 Repliki są bezstanowe (sesje i blokady w bazie) — sticky sessions nie są potrzebne.
 Po wdrożeniu nowej wersji otwarte karty przeglądarki starej wersji poproszą o odświeżenie.
 
+## Źródła danych
+
+- **PubChem (NIH)** — na stronie substancji przycisk „Pobierz dane z PubChem” wyszukuje po numerze CAS identyfikatory
+  (nr WE, nr indeksowy, wzór, masa molowa) oraz klasyfikację: **zharmonizowaną z zał. VI CLP**, a gdy jej brak —
+  zwroty ze zgłoszeń do wykazu C&L ECHA z odsetkiem zgłaszających. To propozycja: chemik wybiera, co przyjąć
+  (kategorie niejednoznaczne, np. H314 → 1A/1B/1C, wskazuje ręcznie). PubChem nie podaje SCL, współczynników M ani ATE.
+  API jest publiczne, bez klucza; wysyłany jest wyłącznie numer CAS. Pod musi mieć wyjście do
+  `pubchem.ncbi.nlm.nih.gov` (wyłączenie funkcji: `PUBCHEM_LOOKUP=off`).
+- **ECHA** nie udostępnia publicznego API; źródłem wiążącym pozostaje tabela 3 zał. VI CLP (ECHA publikuje jej
+  nieoficjalny arkusz Excel — kandydat do importu SCL i współczynników M).
+- **Treść kart** tworzy się w aplikacji; nie istnieje darmowe źródło gotowych, zgodnych kart dla własnych mieszanin.
+  Standardem wymiany danych kart jest otwarty format **eSDScom XML** (z katalogiem zwrotów EuPhraC) — naturalny
+  kierunek dla eksportu/importu i standardowych zwrotów w sekcjach 4–13.
+
 ## Wydawanie nowych wersji
 
 Jednorazowo: `cp .release.env.example .release.env`, wpisz `IMAGE_REPO` (np. `ghcr.io/twoj-login/sds-app`),
@@ -142,8 +156,10 @@ jodek potasu w C-41 przypisany do części B.
 ## Ograniczenia
 
 - Silnik klasyfikacji obejmuje główne punkty końcowe CLP; progi w `src/lib/classification/constants.ts` należy
-  zweryfikować z zał. I. Specyficzne stężenia graniczne dla działania żrącego (np. NaOH) są opisane w uwagach,
-  ale silnik stosuje je tylko dla klas CMR. Wynik jest propozycją z regułą decydującą — decyzja należy do chemika.
+  zweryfikować z zał. I. Działanie na skórę i oczy liczone jest addytywnie z granicami indywidualnymi
+  (Σ Cᵢ/Lᵢ ≥ 1, gdzie Lᵢ to SCL albo granica ogólna) — SCL wpisuje się przy klasach substancji, także jako wpis
+  „tylko stężenie graniczne” (np. NaOH: Skin Irrit. 2 przy 0,5–2 %). Dla toksyczności ostrej i środowiska SCL nie są
+  stosowane (ATE i współczynniki M). Wynik jest propozycją z regułą decydującą — decyzja należy do chemika.
 - Blokady obejmują karty i mieszaniny; substancje i produkty zapisują się według zasady „ostatni zapis wygrywa”.
 - Limiter nieudanych logowań działa w pamięci poda — dodatkowo ogranicz żądania do `/login` na Traefiku.
 - PDF powstaje przez druk przeglądarki; wielojęzyczność dotyczy tylko zwrotów H/P; PCN to lista kontrolna, bez zgłoszenia.

@@ -8,6 +8,7 @@ import { requireUser } from '@/server/auth/guard';
 import { result, UserError } from '@/server/errors';
 import { isValidCas, normalizeCas } from '@/lib/cas';
 import { HAZARD_CLASS_BY_CODE } from '@/data/hazard-classes';
+import { lookupByCas } from '@/server/pubchem';
 
 const optional = z
   .string()
@@ -66,6 +67,7 @@ export async function updateSubstance(cas: string, values: z.input<typeof update
     }
     const updated = await prisma.substance.update({ where: { cas }, data });
     revalidatePath('/substancje');
+    revalidatePath(`/substancje/${encodeURIComponent(updated.cas)}`);
     return updated.cas;
   });
 }
@@ -98,6 +100,7 @@ const hazardSchema = z.object({
   ateInhalVapour: num,
   sclMin: num,
   sclStatement: z.string().trim().nullable().optional(),
+  limitOnly: z.boolean().optional(),
   note: z.string().nullable().optional(),
 });
 
@@ -134,5 +137,15 @@ export async function markSubstanceVerified(cas: string, sourceRef?: string) {
     });
     revalidatePath('/substancje');
     revalidatePath(`/substancje/${encodeURIComponent(cas)}`);
+  });
+}
+
+/** Propozycja danych substancji z PubChem (identyfikatory + klasyfikacja GHS). Niczego nie zapisuje. */
+export async function lookupSubstanceData(cas: string) {
+  return result(async () => {
+    await requireUser('EDITOR');
+    const data = await lookupByCas(casSchema.parse(cas));
+    if (!data) throw new UserError(`PubChem nie zna substancji o numerze CAS ${cas}.`);
+    return data;
   });
 }

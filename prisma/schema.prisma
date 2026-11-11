@@ -122,6 +122,8 @@ model SubstanceHazard {
   ateInhalVapour Float?
   sclMin         Float?
   sclStatement   String?
+  /// Wpis jest wyłącznie stężeniem granicznym (SCL), nie klasą samej substancji
+  limitOnly      Boolean @default(false)
   note           String?
   position       Int     @default(0)
 

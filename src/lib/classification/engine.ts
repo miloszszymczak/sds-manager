@@ -32,6 +32,11 @@ export interface EngineHazard {
   ateInhalVapour?: number | null;
   sclMin?: number | null;
   sclStatement?: string | null;
+  /**
+   * Wpis jest wyłącznie stężeniem granicznym (SCL) — nie jest klasą samej substancji.
+   * Np. NaOH (Skin Corr. 1A) ma wpisy graniczne: Skin Corr. 1B ≥ 2 %, Skin Irrit. 2 ≥ 0,5 %.
+   */
+  limitOnly?: boolean | null;
 }
 
 export interface EngineComponent {
@@ -64,18 +69,23 @@ const catNum = (code: string): number | null => {
   const m = code.match(/(\d)(?=[AB]?$)/);
   return m ? Number(m[1]) : null;
 };
-const has = (c: EngineComponent, prefix: string) => c.hazards.some((h) => h.hazardClass.startsWith(prefix));
+/** Czy substancja sama należy do klasy (wpisy „tylko SCL” się nie liczą). */
+const has = (c: EngineComponent, prefix: string) =>
+  c.hazards.some((h) => !h.limitOnly && h.hazardClass.startsWith(prefix));
 const fmt = (n: number) => Number(n.toFixed(2)).toString().replace('.', ',');
 
 /* ─────────────────────────── główna funkcja ─────────────────────────── */
 
 export function classifyMixture(components: EngineComponent[]): ClassificationResult {
+  // Toksyczność ostra i środowisko liczą się z klas własnych substancji.
+  const own = components.map((c) => ({ ...c, hazards: c.hazards.filter((h) => !h.limitOnly) }));
+  const skin = skinCorrosion(components);
   const endpoints: EndpointResult[] = [
-    ...acuteToxicity(components),
-    skinCorrosion(components),
-    eyeDamage(components),
+    ...acuteToxicity(own),
+    skin,
+    eyeDamage(components, skin),
     ...thresholdEndpoints(components),
-    ...aquatic(components),
+    ...aquatic(own),
   ];
 
   const hazardClasses: string[] = [];
@@ -141,93 +151,102 @@ function acuteToxicity(components: EngineComponent[]): EndpointResult[] {
 
 /* ─────────────────────────── skóra / oczy ─────────────────────────── */
 
-function sumWhere(components: EngineComponent[], prefix: string): { sum: number; names: string[] } {
+/**
+ * Addytywność z granicami indywidualnymi (CLP 3.2.3.3 / 3.3.3.3, wytyczne ECHA):
+ * mieszanina spełnia kryterium, gdy Σ(Cᵢ / Lᵢ) ≥ 1, gdzie Lᵢ to specyficzne stężenie
+ * graniczne składnika (SCL), a gdy go brak — granica ogólna. Bez SCL daje to dokładnie
+ * klasyczne sumy (np. Σ Skin Corr. 1 ≥ 5 %; 10×Σ Skin Corr. 1 + Σ Skin Irrit. 2 ≥ 10 %).
+ */
+interface Level {
+  /** Prefiksy klas, których SCL definiuje granicę składnika dla tego poziomu */
+  sclPrefixes: string[];
+  /** Granice ogólne wg klasy własnej składnika: [prefiks, granica %] (pierwsze trafienie) */
+  generic: [string, number][];
+}
+
+function limitFor(c: EngineComponent, level: Level): { limit: number; scl: boolean } | null {
+  const scls = c.hazards
+    .filter((h) => h.sclMin != null && h.sclMin > 0 && level.sclPrefixes.some((p) => h.hazardClass.startsWith(p)))
+    .map((h) => h.sclMin!);
+  if (scls.length) return { limit: Math.min(...scls), scl: true };
+  for (const [prefix, limit] of level.generic) if (has(c, prefix)) return { limit, scl: false };
+  return null;
+}
+
+function ratio(components: EngineComponent[], level: Level) {
   let sum = 0;
+  let usesScl = false;
   const names: string[] = [];
   for (const c of components) {
-    if (has(c, prefix)) {
-      sum += c.percent;
-      names.push(c.name);
-    }
+    const l = limitFor(c, level);
+    if (!l || c.percent <= 0) continue;
+    sum += c.percent / l.limit;
+    usesScl ||= l.scl;
+    names.push(c.name);
   }
-  return { sum, names };
+  return { sum, usesScl, names, met: sum >= 1 - 1e-9 };
 }
+
+const ratioRule = (label: string, r: { sum: number; usesScl: boolean }) =>
+  `Σ(Cᵢ/Lᵢ) dla ${label} = ${fmt(r.sum)} ${r.sum >= 1 - 1e-9 ? '≥' : '<'} 1${r.usesScl ? ' (z SCL)' : ''}`;
+
+const G = SKIN_EYE;
+const SKIN_CORR: Level = { sclPrefixes: ['Skin Corr.'], generic: [['Skin Corr.', G.skinCorr1]] };
+const SKIN_CORR_1A: Level = { sclPrefixes: ['Skin Corr. 1A'], generic: [['Skin Corr. 1A', G.skinCorr1]] };
+const SKIN_CORR_1AB: Level = {
+  sclPrefixes: ['Skin Corr. 1A', 'Skin Corr. 1B'],
+  generic: [['Skin Corr. 1A', G.skinCorr1], ['Skin Corr. 1B', G.skinCorr1]],
+};
+const SKIN_IRRIT: Level = {
+  sclPrefixes: ['Skin Irrit.'],
+  // substancja żrąca liczy się 10× (granica 1 %), drażniąca — granica 10 %
+  generic: [['Skin Corr.', G.skinIrrit2 / 10], ['Skin Irrit.', G.skinIrrit2]],
+};
+const EYE_DAM: Level = { sclPrefixes: ['Eye Dam.'], generic: [['Eye Dam.', G.eyeDam1], ['Skin Corr.', G.eyeDam1]] };
+const EYE_IRRIT: Level = {
+  sclPrefixes: ['Eye Irrit.'],
+  generic: [['Eye Irrit.', G.eyeIrrit2], ['Eye Dam.', G.eyeIrrit2], ['Skin Corr.', G.eyeIrrit2]],
+};
 
 function skinCorrosion(components: EngineComponent[]): EndpointResult {
-  const corr = sumWhere(components, 'Skin Corr. 1');
-  const irrit = sumWhere(components, 'Skin Irrit. 2');
-  if (corr.sum >= SKIN_EYE.skinCorr1) {
-    // CLP 3.2.3.3.4: podkategoria mieszaniny wynika z sum podkategorii składników.
-    const sub1A = sumWhere(components, 'Skin Corr. 1A').sum;
-    const sub1B = sumWhere(components, 'Skin Corr. 1B').sum;
-    const sub1C = sumWhere(components, 'Skin Corr. 1C').sum;
-    const unspecified = corr.sum - sub1A - sub1B - sub1C;
-    const hazardClass =
-      unspecified > 0
-        ? 'Skin Corr. 1'
-        : sub1A >= SKIN_EYE.skinCorr1
-          ? 'Skin Corr. 1A'
-          : sub1A + sub1B >= SKIN_EYE.skinCorr1
-            ? 'Skin Corr. 1B'
-            : 'Skin Corr. 1C';
-    return {
-      endpoint: 'Działanie żrące/drażniące na skórę',
-      hazardClass,
-      statement: 'H314',
-      rule: `Σ(Skin Corr. 1) = ${fmt(corr.sum)} % ≥ ${SKIN_EYE.skinCorr1} % → ${hazardClass}`,
-      contributors: corr.names,
-    };
+  const endpoint = 'Działanie żrące/drażniące na skórę';
+  const corr = ratio(components, SKIN_CORR);
+  if (corr.met) {
+    // CLP 3.2.3.3.4: podkategoria wynika z udziału składników poszczególnych podkategorii.
+    const unspecified = components.some((c) =>
+      c.hazards.some((h) => !h.limitOnly && h.hazardClass === 'Skin Corr. 1' && c.percent > 0),
+    );
+    const hazardClass = unspecified
+      ? 'Skin Corr. 1'
+      : ratio(components, SKIN_CORR_1A).met
+        ? 'Skin Corr. 1A'
+        : ratio(components, SKIN_CORR_1AB).met
+          ? 'Skin Corr. 1B'
+          : 'Skin Corr. 1C';
+    return { endpoint, hazardClass, statement: 'H314', rule: `${ratioRule('Skin Corr. 1', corr)} → ${hazardClass}`, contributors: corr.names };
   }
-  const combined = irrit.sum + 10 * corr.sum;
-  if (combined >= SKIN_EYE.skinIrrit2) {
-    return {
-      endpoint: 'Działanie żrące/drażniące na skórę',
-      hazardClass: 'Skin Irrit. 2',
-      statement: 'H315',
-      rule: `Σ(Skin Irrit. 2) + 10×Σ(Skin Corr. 1) = ${fmt(combined)} % ≥ ${SKIN_EYE.skinIrrit2} %`,
-      contributors: [...irrit.names, ...corr.names],
-    };
+  const irrit = ratio(components, SKIN_IRRIT);
+  if (irrit.met) {
+    return { endpoint, hazardClass: 'Skin Irrit. 2', statement: 'H315', rule: ratioRule('Skin Irrit. 2', irrit), contributors: irrit.names };
   }
-  return {
-    endpoint: 'Działanie żrące/drażniące na skórę',
-    hazardClass: null,
-    statement: null,
-    rule: `poniżej progu (Σ = ${fmt(combined)} %)`,
-    contributors: [],
-  };
+  return { endpoint, hazardClass: null, statement: null, rule: `poniżej progu: ${ratioRule('Skin Irrit. 2', irrit)}`, contributors: [] };
 }
 
-function eyeDamage(components: EngineComponent[]): EndpointResult {
-  const corr = sumWhere(components, 'Skin Corr. 1');
-  const dam = sumWhere(components, 'Eye Dam. 1');
-  const irrit = sumWhere(components, 'Eye Irrit. 2');
-  const damSum = dam.sum + corr.sum;
-  if (damSum >= SKIN_EYE.eyeDam1) {
-    return {
-      endpoint: 'Poważne uszkodzenie/działanie drażniące na oczy',
-      hazardClass: 'Eye Dam. 1',
-      statement: 'H318',
-      rule: `Σ(Eye Dam. 1 + Skin Corr. 1) = ${fmt(damSum)} % ≥ ${SKIN_EYE.eyeDam1} %`,
-      contributors: [...dam.names, ...corr.names],
-    };
+function eyeDamage(components: EngineComponent[], skin: EndpointResult): EndpointResult {
+  const endpoint = 'Poważne uszkodzenie/działanie drażniące na oczy';
+  // Mieszanina żrąca dla skóry z definicji powoduje poważne uszkodzenie oczu (CLP 3.3.2.1.1).
+  if (skin.hazardClass?.startsWith('Skin Corr.')) {
+    return { endpoint, hazardClass: 'Eye Dam. 1', statement: 'H318', rule: `wynika z klasyfikacji ${skin.hazardClass}`, contributors: skin.contributors };
   }
-  const irritSum = irrit.sum + dam.sum + corr.sum;
-  if (irritSum >= SKIN_EYE.eyeIrrit2) {
-    return {
-      endpoint: 'Poważne uszkodzenie/działanie drażniące na oczy',
-      hazardClass: 'Eye Irrit. 2',
-      statement: 'H319',
-      rule: `Σ(Eye Irrit. 2 + Eye Dam. 1 + Skin Corr. 1) = ${fmt(irritSum)} % ≥ ${SKIN_EYE.eyeIrrit2} %`,
-      contributors: [...irrit.names, ...dam.names, ...corr.names],
-    };
+  const dam = ratio(components, EYE_DAM);
+  if (dam.met) {
+    return { endpoint, hazardClass: 'Eye Dam. 1', statement: 'H318', rule: ratioRule('Eye Dam. 1', dam), contributors: dam.names };
   }
-  return {
-    endpoint: 'Poważne uszkodzenie/działanie drażniące na oczy',
-    hazardClass: null,
-    statement: null,
-    rule: `poniżej progu (Σ = ${fmt(irritSum)} %)`,
-    contributors: [],
-  };
+  const irrit = ratio(components, EYE_IRRIT);
+  if (irrit.met) {
+    return { endpoint, hazardClass: 'Eye Irrit. 2', statement: 'H319', rule: ratioRule('Eye Irrit. 2', irrit), contributors: irrit.names };
+  }
+  return { endpoint, hazardClass: null, statement: null, rule: `poniżej progu: ${ratioRule('Eye Irrit. 2', irrit)}`, contributors: [] };
 }
 
 /* ─────────────────────────── klasy progowe (CMR, uczulenie, STOT, aspiracja) ─────────────────────────── */
@@ -250,6 +269,7 @@ function thresholdEndpoints(components: EngineComponent[]): EndpointResult[] {
     for (const c of components) {
       for (const h of c.hazards) {
         if (!prefixes.some((p) => h.hazardClass.startsWith(p))) continue;
+        if (h.limitOnly && h.sclMin == null) continue;
         const scl = h.sclMin != null;
         const limit = scl ? h.sclMin! : (GENERIC_LIMIT[h.hazardClass] ?? Infinity);
         if (c.percent >= limit) {

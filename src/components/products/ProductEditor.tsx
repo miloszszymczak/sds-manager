@@ -99,7 +99,7 @@ export function ProductEditor({ product: p, variants, canEdit }: { product: Prod
                   <input
                     type="number"
                     min="1"
-                    className="cell-input w-16"
+                    className="cell-field w-16"
                     defaultValue={i.quantity}
                     key={i.quantity}
                     onBlur={(e) => Number(e.target.value) !== i.quantity && run(updateProductItem(i.id, Number(e.target.value)))}

@@ -1,0 +1,266 @@
+{
+ "Record": {
+  "RecordNumber": 785,
+  "Section": [
+   {
+    "TOCHeading": "Safety and Hazards",
+    "Section": [
+     {
+      "TOCHeading": "Hazards Identification",
+      "Section": [
+       {
+        "TOCHeading": "GHS Classification",
+        "Information": [
+         {
+          "ReferenceNumber": 140,
+          "Name": "Signal",
+          "Value": {
+           "StringWithMarkup": [
+            {
+             "String": "Danger"
+            }
+           ]
+          }
+         },
+         {
+          "ReferenceNumber": 140,
+          "Name": "GHS Hazard Statements",
+          "Value": {
+           "StringWithMarkup": [
+            {
+             "String": "H302: Harmful if swallowed [Warning Acute toxicity, oral]"
+            },
+            {
+             "String": "H317: May cause an allergic skin reaction [Warning Sensitization, Skin]"
+            },
+            {
+             "String": "H318: Causes serious eye damage [Danger Serious eye damage/eye irritation]"
+            },
+            {
+             "String": "H341: Suspected of causing genetic defects [Warning Germ cell mutagenicity]"
+            },
+            {
+             "String": "H351: Suspected of causing cancer [Warning Carcinogenicity]"
+            },
+            {
+             "String": "H400: Very toxic to aquatic life [Warning Hazardous to the aquatic environment, acute hazard]"
+            }
+           ]
+          }
+         },
+         {
+          "ReferenceNumber": 52,
+          "Name": "Signal",
+          "Value": {
+           "StringWithMarkup": [
+            {
+             "String": "Danger"
+            }
+           ]
+          }
+         },
+         {
+          "ReferenceNumber": 52,
+          "Name": "GHS Hazard Statements",
+          "Value": {
+           "StringWithMarkup": [
+            {
+             "String": "H302+H312 (17.7%): Harmful if swallowed or in contact with skin [Warning Acute toxicity, oral; acute toxicity, dermal]"
+            },
+            {
+             "String": "H302 (99.7%): Harmful if swallowed [Warning Acute toxicity, oral]"
+            },
+            {
+             "String": "H312 (17.7%): Harmful in contact with skin [Warning Acute toxicity, dermal]"
+            },
+            {
+             "String": "H317 (> 99.9%): May cause an allergic skin reaction [Warning Sensitization, Skin]"
+            },
+            {
+             "String": "H318 (99.9%): Causes serious eye damage [Danger Serious eye damage/eye irritation]"
+            },
+            {
+             "String": "H341 (99.9%): Suspected of causing genetic defects [Warning Germ cell mutagenicity]"
+            },
+            {
+             "String": "H351 (> 99.9%): Suspected of causing cancer [Warning Carcinogenicity]"
+            },
+            {
+             "String": "H400 (> 99.9%): Very toxic to aquatic life [Warning Hazardous to the aquatic environment, acute hazard]"
+            },
+            {
+             "String": "H410 (21.2%): Very toxic to aquatic life with long lasting effects [Warning Hazardous to the aquatic environment, long-term hazard]"
+            }
+           ]
+          }
+         },
+         {
+          "ReferenceNumber": 121,
+          "Name": "Signal",
+          "Value": {
+           "StringWithMarkup": [
+            {
+             "String": "Danger"
+            }
+           ]
+          }
+         },
+         {
+          "ReferenceNumber": 121,
+          "Name": "GHS Hazard Statements",
+          "Value": {
+           "StringWithMarkup": [
+            {
+             "String": "H302: Harmful if swallowed [Warning Acute toxicity, oral]"
+            },
+            {
+             "String": "H317: May cause an allergic skin reaction [Warning Sensitization, Skin]"
+            },
+            {
+             "String": "H318: Causes serious eye damage [Danger Serious eye damage/eye irritation]"
+            },
+            {
+             "String": "H340: May cause genetic defects [Danger Germ cell mutagenicity]"
+            },
+            {
+             "String": "H351: Suspected of causing cancer [Warning Carcinogenicity]"
+            },
+            {
+             "String": "H370: Causes damage to organs [Danger Specific target organ toxicity, single exposure]"
+            },
+            {
+             "String": "H373: May causes damage to organs through prolonged or repeated exposure [Warning Specific target organ toxicity, repeated exposure]"
+            },
+            {
+             "String": "H400: Very toxic to aquatic life [Warning Hazardous to the aquatic environment, acute hazard]"
+            },
+            {
+             "String": "H410: Very toxic to aquatic life with long lasting effects [Warning Hazardous to the aquatic environment, long-term hazard]"
+            }
+           ]
+          }
+         },
+         {
+          "ReferenceNumber": 122,
+          "Name": "Signal",
+          "Value": {
+           "StringWithMarkup": [
+            {
+             "String": "Danger"
+            }
+           ]
+          }
+         },
+         {
+          "ReferenceNumber": 122,
+          "Name": "GHS Hazard Statements",
+          "Value": {
+           "StringWithMarkup": [
+            {
+             "String": "H316: Causes mild skin irritation [Warning Skin corrosion/irritation]"
+            },
+            {
+             "String": "H318: Causes serious eye damage [Danger Serious eye damage/eye irritation]"
+            },
+            {
+             "String": "H336: May cause drowsiness or dizziness [Warning Specific target organ toxicity, single exposure; Narcotic effects]"
+            },
+            {
+             "String": "H341: Suspected of causing genetic defects [Warning Germ cell mutagenicity]"
+            },
+            {
+             "String": "H373: May causes damage to organs through prolonged or repeated exposure [Warning Specific target organ toxicity, repeated exposure]"
+            }
+           ]
+          }
+         },
+         {
+          "ReferenceNumber": 123,
+          "Name": "Signal",
+          "Value": {
+           "StringWithMarkup": [
+            {
+             "String": "Danger"
+            }
+           ]
+          }
+         },
+         {
+          "ReferenceNumber": 123,
+          "Name": "GHS Hazard Statements",
+          "Value": {
+           "StringWithMarkup": [
+            {
+             "String": "H302: Harmful if swallowed [Warning Acute toxicity, oral]"
+            },
+            {
+             "String": "H315: Causes skin irritation [Warning Skin corrosion/irritation]"
+            },
+            {
+             "String": "H317: May cause an allergic skin reaction [Warning Sensitization, Skin]"
+            },
+            {
+             "String": "H319: Causes serious eye irritation [Warning Serious eye damage/eye irritation]"
+            },
+            {
+             "String": "H340: May cause genetic defects [Danger Germ cell mutagenicity]"
+            },
+            {
+             "String": "H351: Suspected of causing cancer [Warning Carcinogenicity]"
+            },
+            {
+             "String": "H360: May damage fertility or the unborn child [Danger Reproductive toxicity]"
+            },
+            {
+             "String": "H370: Causes damage to organs [Danger Specific target organ toxicity, single exposure]"
+            },
+            {
+             "String": "H372: Causes damage to organs through prolonged or repeated exposure [Danger Specific target organ toxicity, repeated exposure]"
+            },
+            {
+             "String": "H373: May causes damage to organs through prolonged or repeated exposure [Warning Specific target organ toxicity, repeated exposure]"
+            }
+           ]
+          }
+         }
+        ]
+       }
+      ]
+     }
+    ]
+   }
+  ],
+  "Reference": [
+   {
+    "ReferenceNumber": 140,
+    "SourceName": "Regulation (EC) No 1272/2008 of the European Parliament and of the Council",
+    "SourceID": "604-005-00-4",
+    "Name": "1,4-dihydroxybenzene; hydroquinone; quinol"
+   },
+   {
+    "ReferenceNumber": 52,
+    "SourceName": "European Chemicals Agency (ECHA)",
+    "SourceID": "9424",
+    "Name": "Hydroquinone (EC: 204-617-8)"
+   },
+   {
+    "ReferenceNumber": 121,
+    "SourceName": "NITE-CMC",
+    "SourceID": "24B6513",
+    "Name": "Hydroquinone - FY2012 (Revised classification)"
+   },
+   {
+    "ReferenceNumber": 122,
+    "SourceName": "NITE-CMC",
+    "SourceID": "176",
+    "Name": "Hydroquinone - FY2007 (Revised classification)"
+   },
+   {
+    "ReferenceNumber": 123,
+    "SourceName": "NITE-CMC",
+    "SourceID": "176_1946",
+    "Name": "Hydroquinone - FY2006 (New/original classication)"
+   }
+  ]
+ }
+}

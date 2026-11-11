@@ -19,7 +19,7 @@ export default async function SubstancesPage({ searchParams }: { searchParams: P
       ? { OR: [{ name: { contains: q, mode: 'insensitive' } }, { nameEn: { contains: q, mode: 'insensitive' } }, { cas: { contains: q } }] }
       : undefined,
     orderBy: { name: 'asc' },
-    include: { hazards: { select: { hazardClass: true }, orderBy: { position: 'asc' } }, _count: { select: { mixtureComponents: true } } },
+    include: { hazards: { where: { limitOnly: false }, select: { hazardClass: true }, orderBy: { position: 'asc' } }, _count: { select: { mixtureComponents: true } } },
   });
 
   return (

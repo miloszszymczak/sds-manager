@@ -73,6 +73,34 @@ async function seedSubstances() {
   log(`substancje: ${created} nowych (łącznie w danych: ${SUBSTANCES.length})`);
 }
 
+/**
+ * Uzupełnienie istniejących baz o stężenia graniczne dla skóry/oczu (od wersji 1.1):
+ * dotyczy tylko substancji, które nie mają jeszcze żadnego wpisu „tylko SCL”.
+ */
+async function seedConcentrationLimits() {
+  let updated = 0;
+  for (const s of SUBSTANCES) {
+    const limits = (s.hazards ?? []).filter((h) => h.limitOnly);
+    if (!limits.length) continue;
+    const existing = await prisma.substance.findUnique({ where: { cas: s.cas }, include: { hazards: true } });
+    if (!existing || existing.hazards.some((h) => h.limitOnly)) continue;
+    await prisma.$transaction(async (tx) => {
+      // granica dla klasy własnej (np. Skin Corr. 1A ≥ 5 %), jeśli jeszcze nie ustawiona
+      for (const own of (s.hazards ?? []).filter((h) => !h.limitOnly && h.sclMin != null)) {
+        await tx.substanceHazard.updateMany({
+          where: { substanceCas: s.cas, hazardClass: own.hazardClass, sclMin: null },
+          data: { sclMin: own.sclMin },
+        });
+      }
+      await tx.substanceHazard.createMany({
+        data: limits.map((h, i) => ({ ...h, substanceCas: s.cas, position: existing.hazards.length + i })),
+      });
+    });
+    updated++;
+  }
+  if (updated) log(`stężenia graniczne (SCL) uzupełnione dla ${updated} substancji`);
+}
+
 async function seedMixtures() {
   let created = 0;
   for (const m of MIXTURES) {
@@ -181,6 +209,7 @@ async function main() {
   await seedAdmin();
   await seedSupplier();
   await seedSubstances();
+  await seedConcentrationLimits();
   await seedMixtures();
   await seedProducts();
   await seedD76Documents();

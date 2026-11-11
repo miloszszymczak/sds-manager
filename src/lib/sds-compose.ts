@@ -45,9 +45,11 @@ export interface Composition {
 
 /** Klasy i zwroty H substancji w postaci zapisywanej na składniku karty. */
 export function substanceHazardCodes(s: Pick<SubstanceLike, 'hazards'>) {
+  // Wpisy „tylko SCL” to granice stężeń, nie klasyfikacja samej substancji.
+  const own = s.hazards.filter((h) => !h.limitOnly);
   return {
-    hazardClasses: [...new Set(s.hazards.map((h) => h.hazardClass))],
-    hazardStatements: [...new Set(s.hazards.map((h) => h.sclStatement || h.statement).filter((x): x is string => !!x))],
+    hazardClasses: [...new Set(own.map((h) => h.hazardClass))],
+    hazardStatements: [...new Set(own.map((h) => h.sclStatement || h.statement).filter((x): x is string => !!x))],
   };
 }
 
