@@ -9,3 +9,5 @@ data:
   # Gdy publiczna domena różni się od nagłówka Host widzianego przez pod,
   # wpisz ją tutaj (np. "sds.example.com"), inaczej akcje serwerowe zostaną odrzucone.
   SERVER_ACTIONS_ALLOWED_ORIGINS: ""
+  # Pobieranie danych substancji z PubChem (wymaga wyjścia do pubchem.ncbi.nlm.nih.gov); "off" wyłącza.
+  PUBCHEM_LOOKUP: "on"

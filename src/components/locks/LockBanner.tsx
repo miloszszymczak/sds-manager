@@ -23,23 +23,19 @@ export function LockBanner({
       </div>
     );
   }
-  if (state.mine) return null;
+  // Brak właściciela = blokada właśnie jest przejmowana (ułamek sekundy) — bez migania paskiem.
+  const holder = state.holder;
+  if (state.mine || !holder) return null;
   return (
     <div className="no-print flex flex-wrap items-center justify-center gap-3 border-b border-amber-200 bg-amber-50 px-5 py-2 text-sm text-amber-900">
       <span>
-        {state.holder ? (
-          <>
-            🔒 Ten {what} edytuje teraz <strong>{state.holder.name}</strong> — tryb tylko do odczytu. Edycja odblokuje się
-            automatycznie, gdy zakończy pracę.
-          </>
-        ) : (
-          <>Przejmowanie blokady edycji…</>
-        )}
+        🔒 Ten {what} edytuje teraz <strong>{holder.name}</strong> — tryb tylko do odczytu. Edycja odblokuje się
+        automatycznie, gdy zakończy pracę.
       </span>
-      {state.holder && isAdmin && (
+      {isAdmin && (
         <button
           className="btn-outline px-2 py-1 text-xs"
-          onClick={() => confirm(`Przejąć edycję od: ${state.holder!.name}? Jego niezapisane zmiany mogą przepaść.`) && onTakeOver()}
+          onClick={() => confirm(`Przejąć edycję od: ${holder.name}? Jego niezapisane zmiany mogą przepaść.`) && onTakeOver()}
         >
           Przejmij edycję
         </button>

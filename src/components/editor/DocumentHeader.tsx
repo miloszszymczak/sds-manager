@@ -56,8 +56,8 @@ export function DocumentHeader({
 
   return (
     <div className="no-print border-b border-slate-200 bg-white">
-      <div className="mx-auto max-w-[1600px] px-5 pt-3">
-        <div className="flex flex-wrap items-center gap-2 text-xs text-slate-400">
+      <div className="mx-auto flex max-w-[1600px] flex-wrap items-center gap-2 px-5 pt-3">
+        <div className="flex min-w-0 flex-1 flex-wrap items-center gap-2 text-xs text-slate-400">
           <Link href="/dokumenty" className="hover:text-slate-600">
             Karty SDS
           </Link>
@@ -72,8 +72,20 @@ export function DocumentHeader({
             </>
           )}
         </div>
+        <Link href={`/dokumenty/${documentId}/historia`} className="btn-ghost">
+          Historia
+        </Link>
+        <Link href={`/dokumenty/${documentId}/pcn`} className="btn-ghost">
+          PCN
+        </Link>
+        <Link href={`/dokumenty/${documentId}/etykieta`} className="btn-outline">
+          Etykieta
+        </Link>
+        <Link href={`/dokumenty/${documentId}/podglad`} className="btn-primary">
+          Podgląd / PDF
+        </Link>
       </div>
-      <fieldset disabled={!editable} className="mx-auto flex max-w-[1600px] flex-wrap items-center gap-3 px-5 py-2">
+      <fieldset disabled={!editable} className="mx-auto flex max-w-[1600px] flex-wrap items-center gap-3 px-5 pt-1 pb-3">
         <input
           value={draft.productName}
           onChange={(e) => setDraft({ ...draft, productName: e.target.value })}
@@ -87,7 +99,7 @@ export function DocumentHeader({
             onChange={(e) => setDraft({ ...draft, ufi: e.target.value })}
             onBlur={() => draft.ufi !== saved.ufi && push({ ufi: draft.ufi })}
             placeholder="XXXX-XXXX-XXXX-XXXX"
-            className="w-48 rounded-md border border-slate-300 px-2 py-1 font-mono text-sm outline-none focus:border-brand-500"
+            className="w-48 rounded-md border border-slate-300 px-2 py-1 font-mono text-sm text-slate-900 outline-none focus:border-brand-500"
           />
         </label>
         <label className="flex items-center gap-1.5 text-xs text-slate-500">
@@ -96,7 +108,7 @@ export function DocumentHeader({
             value={draft.version}
             onChange={(e) => setDraft({ ...draft, version: e.target.value })}
             onBlur={() => draft.version !== saved.version && push({ version: draft.version })}
-            className="w-16 rounded-md border border-slate-300 px-2 py-1 text-sm outline-none focus:border-brand-500"
+            className="w-16 rounded-md border border-slate-300 px-2 py-1 text-sm text-slate-900 outline-none focus:border-brand-500"
           />
         </label>
         <select
@@ -115,20 +127,6 @@ export function DocumentHeader({
           ))}
         </select>
       </fieldset>
-      <div className="mx-auto flex max-w-[1600px] flex-wrap items-center gap-2 px-5 pb-3">
-        <Link href={`/dokumenty/${documentId}/historia`} className="btn-ghost">
-          Historia
-        </Link>
-        <Link href={`/dokumenty/${documentId}/pcn`} className="btn-ghost">
-          PCN
-        </Link>
-        <Link href={`/dokumenty/${documentId}/etykieta`} className="btn-outline">
-          Etykieta
-        </Link>
-        <Link href={`/dokumenty/${documentId}/podglad`} className="btn-primary">
-          Podgląd / PDF
-        </Link>
-      </div>
     </div>
   );
 }

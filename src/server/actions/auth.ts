@@ -50,8 +50,13 @@ export async function changeOwnPassword(current: string, next: string) {
     const me = await requireUser();
     const user = await prisma.user.findUniqueOrThrow({ where: { id: me.id } });
     if (!(await verifyPassword(current, user.passwordHash))) throw new UserError('Obecne hasło jest nieprawidłowe.');
-    await prisma.user.update({ where: { id: me.id }, data: { passwordHash: await hashPassword(passwordSchema.parse(next)) } });
-    // Unieważnij pozostałe sesje użytkownika (bieżąca zostaje).
+    const passwordHash = await hashPassword(passwordSchema.parse(next));
+    // Zmiana hasła wylogowuje wszystkie urządzenia; bieżące dostaje nową sesję.
+    await prisma.$transaction([
+      prisma.user.update({ where: { id: me.id }, data: { passwordHash } }),
+      prisma.session.deleteMany({ where: { userId: me.id } }),
+    ]);
+    await createSession(me.id);
     return 'Hasło zmienione.';
   });
 }

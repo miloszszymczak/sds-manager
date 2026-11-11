@@ -216,7 +216,7 @@ export function MixtureEditor({
                     {p.label && <span className="badge bg-brand-50 font-mono text-brand-700">{p.label}</span>}
                     {multi ? (
                       <input
-                        className="cell-input max-w-64 font-medium"
+                        className="cell-field max-w-64 font-medium"
                         defaultValue={p.name ?? ''}
                         key={p.name}
                         placeholder={`część ${p.label}`}
@@ -263,7 +263,7 @@ export function MixtureEditor({
                                 type="number"
                                 step="any"
                                 min="0"
-                                className="cell-input w-24 text-right"
+                                className="cell-field w-24 text-right"
                                 value={drafts[c.id] ?? c.quantity}
                                 onChange={(e) => setDrafts((d) => ({ ...d, [c.id]: Number(e.target.value) }))}
                                 onBlur={() =>
@@ -275,7 +275,7 @@ export function MixtureEditor({
                             </td>
                             <td className="px-2 py-2">
                               <select
-                                className="cell-input"
+                                className="cell-field"
                                 value={c.unit}
                                 onChange={(e) => run(updateMixtureComponent(c.id, { unit: e.target.value as Unit }))}
                               >
@@ -286,7 +286,7 @@ export function MixtureEditor({
                             {multi && (
                               <td className="px-2 py-2">
                                 <select
-                                  className="cell-input"
+                                  className="cell-field"
                                   value={c.packetId}
                                   onChange={(e) => run(updateMixtureComponent(c.id, { packetId: e.target.value }))}
                                 >

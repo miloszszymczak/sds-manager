@@ -80,7 +80,7 @@ export function buildLabel(input: LabelInput): LabelModel {
 /**
  * Ogranicza liczbę zwrotów P do MAX, preferując po jednym z każdej grupy
  * (zapobieganie/reagowanie/przechowywanie/usuwanie), a następnie uzupełnia
- * pozostałymi z zachowaniem kolejności wejściowej.
+ * pozostałymi. Wynik zachowuje kolejność wejściową.
  */
 export function selectPrecautionary(codes: string[]): string[] {
   if (codes.length <= MAX_PRECAUTIONARY) return codes;
@@ -96,14 +96,15 @@ export function selectPrecautionary(codes: string[]): string[] {
   for (const t of order) {
     const list = byType.get(t);
     if (list && list.length) picked.push(list.shift()!);
-    if (picked.length >= MAX_PRECAUTIONARY) return picked;
   }
   // runda 2: uzupełnij resztą w kolejności wejściowej
   for (const c of codes) {
     if (picked.length >= MAX_PRECAUTIONARY) break;
     if (!picked.includes(c)) picked.push(c);
   }
-  return picked.slice(0, MAX_PRECAUTIONARY);
+  // Na etykiecie zwroty idą w kolejności z karty (zapobieganie → reagowanie → …), nie w kolejności doboru.
+  const chosen = new Set(picked.slice(0, MAX_PRECAUTIONARY));
+  return codes.filter((c) => chosen.has(c));
 }
 
 /** Wyciąga listę po „Zawiera:" z tekstu dodatkowego. */

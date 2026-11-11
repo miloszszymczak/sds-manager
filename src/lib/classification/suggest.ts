@@ -15,6 +15,7 @@ export const toEngineHazard = (h: HazardRecord): EngineHazard => ({
   ateInhalVapour: h.ateInhalVapour,
   sclMin: h.sclMin,
   sclStatement: h.sclStatement,
+  limitOnly: h.limitOnly,
 });
 
 export interface ClassificationSuggestion extends ClassificationResult {

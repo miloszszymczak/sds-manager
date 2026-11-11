@@ -7,6 +7,7 @@ import { Shell, Crumbs } from '@/components/Shell';
 import { SubstanceMeta } from '@/components/substances/SubstanceMeta';
 import { HazardEditor } from '@/components/substances/HazardEditor';
 import { VerifyControl } from '@/components/substances/VerifyControl';
+import { PubchemPanel } from '@/components/substances/PubchemPanel';
 import { ActionButton } from '@/components/ui/ActionButton';
 import { deleteSubstance } from '@/server/actions/substances';
 
@@ -24,6 +25,7 @@ export default async function SubstancePage({ params }: { params: Promise<{ cas:
   });
   if (!s) notFound();
   const readOnly = !hasRole(user.role, 'EDITOR');
+  const hazards = s.hazards.map(({ id: _id, substanceCas: _c, position: _p, ...h }) => h);
 
   return (
     <Shell active="substancje">
@@ -71,12 +73,21 @@ export default async function SubstancePage({ params }: { params: Promise<{ cas:
               isSvhc: s.isSvhc,
             }}
           />
-          <div className="rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
-            <HazardEditor
+          {!readOnly && (
+            <PubchemPanel
               cas={s.cas}
-              readOnly={readOnly}
-              initial={s.hazards.map(({ id: _id, substanceCas: _c, position: _p, ...h }) => h)}
+              hazards={hazards}
+              current={{
+                nameEn: s.nameEn,
+                ecNumber: s.ecNumber,
+                indexNumber: s.indexNumber,
+                molecularFormula: s.molecularFormula,
+                molarMass: s.molarMass,
+              }}
             />
+          )}
+          <div className="rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
+            <HazardEditor cas={s.cas} readOnly={readOnly} initial={hazards} />
           </div>
           {!readOnly && s.mixtureComponents.length === 0 && (
             <ActionButton

@@ -16,6 +16,8 @@ export interface SeedHazard {
   mFactorAcute?: number;
   mFactorChronic?: number;
   ateOral?: number;
+  /** Wpis wyłącznie graniczny (SCL) — nie klasa samej substancji */
+  limitOnly?: boolean;
   note?: string;
 }
 
@@ -39,6 +41,14 @@ export interface SeedSubstance {
 }
 
 const ANNEX_VI = 'wstępnie wg zał. VI CLP — do weryfikacji';
+
+/** SCL mocnych zasad (NaOH, KOH) wg zał. VI: 1A ≥ 5 %; 1B 2–5 %; Skin/Eye Irrit. 2: 0,5–2 %. */
+const CAUSTIC_LIMITS: SeedHazard[] = [
+  { hazardClass: 'Skin Corr. 1A', statement: 'H314', sclMin: 5, note: `${ANNEX_VI}; C ≥ 5 %` },
+  { hazardClass: 'Skin Corr. 1B', statement: 'H314', sclMin: 2, limitOnly: true, note: '2 % ≤ C < 5 %' },
+  { hazardClass: 'Skin Irrit. 2', statement: 'H315', sclMin: 0.5, limitOnly: true, note: '0,5 % ≤ C < 2 %' },
+  { hazardClass: 'Eye Irrit. 2', statement: 'H319', sclMin: 0.5, limitOnly: true, note: '0,5 % ≤ C < 2 %' },
+];
 
 export const SUBSTANCES: SeedSubstance[] = [
   // ── zweryfikowane przy kartach D-76 ──
@@ -154,7 +164,7 @@ export const SUBSTANCES: SeedSubstance[] = [
     nameEn: 'CD-3 colour developing agent',
     molecularFormula: 'C12H21N3O2S · 1,5 H2SO4 · H2O',
     molarMass: '436,52 g/mol',
-    notes: 'Brak wpisu zharmonizowanego — klasyfikacja wg karty producenta.',
+    notes: 'Klasyfikację zharmonizowaną (zał. VI CLP) pobierz na stronie substancji: „Pobierz dane z PubChem”.',
   },
   {
     cas: '25646-77-9',
@@ -162,7 +172,7 @@ export const SUBSTANCES: SeedSubstance[] = [
     nameEn: 'CD-4 colour developing agent',
     molecularFormula: 'C11H18N2O · H2SO4',
     molarMass: '292,35 g/mol',
-    notes: 'Brak wpisu zharmonizowanego — klasyfikacja wg karty producenta.',
+    notes: 'Klasyfikację zharmonizowaną (zał. VI CLP) pobierz na stronie substancji: „Pobierz dane z PubChem”.',
   },
   {
     cas: '77-92-9',
@@ -231,7 +241,7 @@ export const SUBSTANCES: SeedSubstance[] = [
     sclNotes: 'Skin Corr. 1A: C ≥ 5 %; 1B: 2–5 %; Skin Irrit. 2 / Eye Irrit. 2: 0,5–2 %',
     hazards: [
       { hazardClass: 'Acute Tox. 4', statement: 'H302', note: ANNEX_VI },
-      { hazardClass: 'Skin Corr. 1A', statement: 'H314', note: `${ANNEX_VI}; SCL dla działania żrącego — patrz uwagi` },
+      ...CAUSTIC_LIMITS,
     ],
   },
   {
@@ -302,9 +312,7 @@ export const SUBSTANCES: SeedSubstance[] = [
     molecularFormula: 'NaOH',
     molarMass: '40,00 g/mol',
     sclNotes: 'Skin Corr. 1A: C ≥ 5 %; 1B: 2–5 %; Skin Irrit. 2 / Eye Irrit. 2: 0,5–2 %',
-    hazards: [
-      { hazardClass: 'Skin Corr. 1A', statement: 'H314', note: `${ANNEX_VI}; SCL dla działania żrącego — patrz uwagi` },
-    ],
+    hazards: CAUSTIC_LIMITS,
   },
   {
     cas: '7681-57-4',
@@ -348,7 +356,9 @@ export const SUBSTANCES: SeedSubstance[] = [
     sclNotes: 'Skin Corr. 1A: C ≥ 15 %; Skin Irrit. 2 / Eye Irrit. 2: 5–15 %',
     notes: 'W arkuszu jako roztwór 10 % — w recepturze podaj substancję i wodę osobno.',
     hazards: [
-      { hazardClass: 'Skin Corr. 1A', statement: 'H314', note: `${ANNEX_VI}; SCL dla działania żrącego — patrz uwagi` },
+      { hazardClass: 'Skin Corr. 1A', statement: 'H314', sclMin: 15, note: `${ANNEX_VI}; C ≥ 15 %` },
+      { hazardClass: 'Skin Irrit. 2', statement: 'H315', sclMin: 5, limitOnly: true, note: '5 % ≤ C < 15 %' },
+      { hazardClass: 'Eye Irrit. 2', statement: 'H319', sclMin: 5, limitOnly: true, note: '5 % ≤ C < 15 %' },
     ],
   },
   {
@@ -367,7 +377,7 @@ export const SUBSTANCES: SeedSubstance[] = [
     molecularFormula: 'N(C2H5)3',
     molarMass: '101,19 g/mol',
     density: 0.726,
-    notes: 'Ciecz łatwopalna i żrąca — uzupełnij klasyfikację z zał. VI CLP przed wydaniem karty Pyro 510.',
+    notes: 'Ciecz łatwopalna i żrąca — przed wydaniem karty Pyro 510 pobierz klasyfikację zał. VI CLP („Pobierz dane z PubChem”).',
   },
   {
     cas: '95-14-7',

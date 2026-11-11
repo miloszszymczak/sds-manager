@@ -265,8 +265,8 @@ export function DocumentEditor(props: EditorProps) {
   return (
     <div className="mx-auto flex max-w-[1600px] gap-6 px-5 py-6">
       {/* ── Nawigacja po sekcjach ── */}
-      <aside className="no-print sticky top-20 h-fit w-64 shrink-0">
-        <nav className="overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm">
+      <aside className="no-print sticky top-[4.5rem] flex max-h-[calc(100vh-5.5rem)] w-64 shrink-0 flex-col self-start">
+        <nav className="min-h-0 overflow-y-auto rounded-xl border border-slate-200 bg-white shadow-sm">
           {SECTIONS.map((s) => {
             const pct = progress[s.number] ?? 0;
             const isActive = s.number === active;
@@ -274,7 +274,7 @@ export function DocumentEditor(props: EditorProps) {
               <button
                 key={s.number}
                 onClick={() => setActive(s.number)}
-                className={`flex w-full items-center gap-2.5 border-l-[3px] px-3 py-2 text-left transition ${
+                className={`flex w-full items-center gap-2.5 border-l-[3px] px-3 py-1.5 text-left transition ${
                   isActive
                     ? 'border-brand-600 bg-brand-50 text-brand-900'
                     : 'border-transparent text-slate-600 hover:bg-slate-50'
@@ -299,7 +299,7 @@ export function DocumentEditor(props: EditorProps) {
           })}
         </nav>
 
-        <div className="mt-3 flex gap-2">
+        <div className="mt-3 flex shrink-0 gap-2">
           <button
             onClick={() => setActive((n) => Math.max(1, n - 1))}
             disabled={active === 1}
