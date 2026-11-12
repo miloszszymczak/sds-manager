@@ -113,11 +113,16 @@ Po wdrożeniu nowej wersji otwarte karty przeglądarki starej wersji poproszą o
   (kategorie niejednoznaczne, np. H314 → 1A/1B/1C, wskazuje ręcznie). PubChem nie podaje SCL, współczynników M ani ATE.
   API jest publiczne, bez klucza; wysyłany jest wyłącznie numer CAS. Pod musi mieć wyjście do
   `pubchem.ncbi.nlm.nih.gov` (wyłączenie funkcji: `PUBCHEM_LOOKUP=off`).
-- **ECHA** nie udostępnia publicznego API; źródłem wiążącym pozostaje tabela 3 zał. VI CLP (ECHA publikuje jej
-  nieoficjalny arkusz Excel — kandydat do importu SCL i współczynników M).
-- **Treść kart** tworzy się w aplikacji; nie istnieje darmowe źródło gotowych, zgodnych kart dla własnych mieszanin.
-  Standardem wymiany danych kart jest otwarty format **eSDScom XML** (z katalogiem zwrotów EuPhraC) — naturalny
-  kierunek dla eksportu/importu i standardowych zwrotów w sekcjach 4–13.
+- **Zał. VI CLP (ECHA)** — „Substancje → Import z zał. VI CLP” przyjmuje arkusz Excel z tabelą wpisów
+  zharmonizowanych pobrany ze strony ECHA (ECHA nie ma publicznego API i blokuje pobieranie automatyczne).
+  Wpisy są dopasowywane po CAS (także wpisy grupowe), a podgląd pokazuje zmiany: klasy, **specyficzne stężenia
+  graniczne, współczynniki M i ATE**, nr indeksowy i WE. Import niczego nie usuwa — uzupełnia i aktualizuje.
+  Kolumny rozpoznawane są po nagłówkach, więc kolejne wydania arkusza nie wymagają zmian w kodzie.
+- **Eksport eSDScom XML 5.6** — przycisk „eSDScom XML” w karcie (jedna karta) i w produkcie (wszystkie karty zestawu
+  w jednym pliku). Sekcje 1–3 i kody odpadów są strukturalne (identyfikatory, dostawca, UFI, klasyfikacja
+  i oznakowanie CLP wg rozp. 2023/707, skład z klasyfikacją składników), pozostałe sekcje jako frazy tekstowe w
+  odpowiadających im polach. Zgodność ze schematem sprawdzają testy (`xmllint` + `vendor/esdscom`, licencja CC BY-ND 4.0).
+  Eksport nie używa identyfikatorów katalogu zwrotów EuPhraC (tekst polski jako FullText).
 
 ## Wydawanie nowych wersji
 
@@ -162,4 +167,6 @@ jodek potasu w C-41 przypisany do części B.
   stosowane (ATE i współczynniki M). Wynik jest propozycją z regułą decydującą — decyzja należy do chemika.
 - Blokady obejmują karty i mieszaniny; substancje i produkty zapisują się według zasady „ostatni zapis wygrywa”.
 - Limiter nieudanych logowań działa w pamięci poda — dodatkowo ogranicz żądania do `/login` na Traefiku.
+- Na etykiecie aplikacja dobiera do 6 zwrotów P: usuwa zbędne (P202 obok P201, zwrot pojedynczy zawarty w łączonym)
+  i daje pierwszeństwo pierwszej pomocy, środkom ochrony i usuwaniu. Ostateczny dobór należy zweryfikować z zał. IV CLP.
 - PDF powstaje przez druk przeglądarki; wielojęzyczność dotyczy tylko zwrotów H/P; PCN to lista kontrolna, bez zgłoszenia.

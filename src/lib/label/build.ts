@@ -78,33 +78,49 @@ export function buildLabel(input: LabelInput): LabelModel {
 }
 
 /**
- * Ogranicza liczbę zwrotów P do MAX, preferując po jednym z każdej grupy
- * (zapobieganie/reagowanie/przechowywanie/usuwanie), a następnie uzupełnia
- * pozostałymi. Wynik zachowuje kolejność wejściową.
+ * Usuwa zwroty zbędne (art. 28 ust. 1 CLP): P202 obok P201 oraz zwrot pojedynczy,
+ * który jest już częścią zwrotu łączonego (np. P352 obok P302+P352).
+ */
+export function removeRedundant(codes: string[]): string[] {
+  const combinedParts = new Set(codes.filter((c) => c.includes('+')).flatMap((c) => c.split('+')));
+  const set = new Set(codes);
+  return codes.filter((c) => {
+    if (c === 'P202' && set.has('P201')) return false;
+    if (!c.includes('+') && combinedParts.has(c)) return false;
+    return true;
+  });
+}
+
+/**
+ * Pierwszeństwo na etykiecie (mniejsza liczba = ważniejszy). Zgodnie z wytycznymi ECHA
+ * do etykietowania pierwszeństwo mają zwroty dotyczące narażenia i pierwszej pomocy,
+ * środki ochrony indywidualnej i usuwanie; ogólne zalecenia zapobiegawcze — na końcu.
+ */
+export function precautionaryRank(code: string): number {
+  if (/^P30[1-8]/.test(code)) return 0; // W PRZYPADKU połknięcia/kontaktu/narażenia…
+  if (code === 'P280' || code === 'P284' || code === 'P501' || code === 'P102') return 1;
+  if (code === 'P201' || code === 'P210' || code === 'P260' || code === 'P261') return 2;
+  const type = PRECAUTIONARY_BY_CODE.get(code)?.type;
+  if (type === 'ZAPOBIEGANIE') return 3;
+  if (type === 'REAGOWANIE') return 4;
+  return 5;
+}
+
+/**
+ * Dobiera co najwyżej MAX_PRECAUTIONARY zwrotów P: usuwa zbędne, wybiera najważniejsze
+ * wg `precautionaryRank` (remis → kolejność z karty) i zwraca je w kolejności z karty.
  */
 export function selectPrecautionary(codes: string[]): string[] {
-  if (codes.length <= MAX_PRECAUTIONARY) return codes;
-  const byType = new Map<string, string[]>();
-  for (const c of codes) {
-    const t = PRECAUTIONARY_BY_CODE.get(c)?.type ?? 'INNE';
-    if (!byType.has(t)) byType.set(t, []);
-    byType.get(t)!.push(c);
-  }
-  const order = ['OGOLNE', 'ZAPOBIEGANIE', 'REAGOWANIE', 'PRZECHOWYWANIE', 'USUWANIE', 'INNE'];
-  const picked: string[] = [];
-  // runda 1: po jednym z każdej grupy
-  for (const t of order) {
-    const list = byType.get(t);
-    if (list && list.length) picked.push(list.shift()!);
-  }
-  // runda 2: uzupełnij resztą w kolejności wejściowej
-  for (const c of codes) {
-    if (picked.length >= MAX_PRECAUTIONARY) break;
-    if (!picked.includes(c)) picked.push(c);
-  }
-  // Na etykiecie zwroty idą w kolejności z karty (zapobieganie → reagowanie → …), nie w kolejności doboru.
-  const chosen = new Set(picked.slice(0, MAX_PRECAUTIONARY));
-  return codes.filter((c) => chosen.has(c));
+  const unique = removeRedundant([...new Set(codes)]);
+  if (unique.length <= MAX_PRECAUTIONARY) return unique;
+  const chosen = new Set(
+    unique
+      .map((code, i) => ({ code, i, rank: precautionaryRank(code) }))
+      .sort((a, b) => a.rank - b.rank || a.i - b.i)
+      .slice(0, MAX_PRECAUTIONARY)
+      .map((x) => x.code),
+  );
+  return unique.filter((c) => chosen.has(c));
 }
 
 /** Wyciąga listę po „Zawiera:" z tekstu dodatkowego. */

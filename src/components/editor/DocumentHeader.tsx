@@ -78,6 +78,9 @@ export function DocumentHeader({
         <Link href={`/dokumenty/${documentId}/pcn`} className="btn-ghost">
           PCN
         </Link>
+        <a href={`/dokumenty/${documentId}/esdscom`} className="btn-ghost" title="Eksport do standardu wymiany kart eSDScom XML 5.6">
+          eSDScom XML
+        </a>
         <Link href={`/dokumenty/${documentId}/etykieta`} className="btn-outline">
           Etykieta
         </Link>
