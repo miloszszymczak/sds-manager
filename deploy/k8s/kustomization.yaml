@@ -16,7 +16,7 @@ resources:
 images:
   - name: sds-app
     newName: git.mwsz.org/milek/sds-manager
-    newTag: "1.0.1"
+    newTag: "1.0.2"
 labels:
   - pairs:
       app.kubernetes.io/name: sds-app
