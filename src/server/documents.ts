@@ -4,6 +4,7 @@ import { prisma, asObject } from '@/server/db';
 import { emptySectionData } from '@/lib/schema/sections';
 import type { RenderData } from '@/components/render/DocumentRenderer';
 import type { Snapshot } from '@/lib/versioning/diff';
+import type { EsdscomInput } from '@/lib/esdscom';
 
 export type SectionMap = Record<number, Record<string, unknown>>;
 
@@ -86,5 +87,29 @@ export async function buildSnapshot(documentId: string, tx: Prisma.TransactionCl
       concentration: c.concentration,
       hazardClasses: c.hazardClasses,
     })),
+  };
+}
+
+/** Dane karty w postaci wejścia eksportu eSDScom XML. */
+export async function loadEsdscomInput(documentId: string, catalogs?: Catalogs): Promise<EsdscomInput | null> {
+  const [doc, data] = await Promise.all([
+    prisma.document.findUnique({ where: { id: documentId }, select: { id: true, otherNames: true } }),
+    buildRenderData(documentId, catalogs),
+  ]);
+  if (!doc || !data) return null;
+  return {
+    documentId: doc.id,
+    productName: data.productName,
+    otherNames: doc.otherNames,
+    version: data.version,
+    issueDate: data.issueDate,
+    revisionDate: data.revisionDate,
+    ufi: data.ufi,
+    sections: data.sectionData,
+    components: data.components,
+    wasteCatalog: data.wasteCatalog,
+    legalCatalog: data.legalCatalog,
+    generatedAt: new Date(),
+    system: `sds-manager ${process.env.APP_VERSION ?? 'dev'}`,
   };
 }

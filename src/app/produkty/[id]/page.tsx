@@ -35,9 +35,14 @@ export default async function ProductPage({ params }: { params: Promise<{ id: st
               Zatwierdzone karty SDS: <strong>{ready}</strong> / {packets.length} opakowań
             </p>
           </div>
-          <Link href={`/produkty/${id}/paczka`} className="btn-primary">
-            📦 Paczka kart SDS (ZIP)
-          </Link>
+          <div className="flex flex-wrap gap-2">
+            <a href={`/produkty/${id}/esdscom`} className="btn-outline" title="Wszystkie karty zestawu w jednym pliku eSDScom XML 5.6">
+              eSDScom XML
+            </a>
+            <Link href={`/produkty/${id}/paczka`} className="btn-primary">
+              📦 Paczka kart SDS (ZIP)
+            </Link>
+          </div>
         </div>
         <ProductEditor
           product={product}

@@ -12,7 +12,7 @@ const nextConfig = {
   output: 'standalone',
   poweredByHeader: false,
   experimental: {
-    serverActions: { bodySizeLimit: '5mb', ...(allowedOrigins.length ? { allowedOrigins } : {}) },
+    serverActions: { bodySizeLimit: '26mb', ...(allowedOrigins.length ? { allowedOrigins } : {}) },
   },
   async headers() {
     return [

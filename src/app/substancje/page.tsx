@@ -32,10 +32,17 @@ export default async function SubstancesPage({ searchParams }: { searchParams: P
               Biblioteka substancji identyfikowanych numerem CAS — źródło składu mieszanin i klasyfikacji.
             </p>
           </div>
-          <form className="flex gap-2">
-            <input name="q" defaultValue={q} placeholder="Szukaj: nazwa lub CAS" className="field w-64" />
-            <button className="btn-outline">Szukaj</button>
-          </form>
+          <div className="flex flex-wrap gap-2">
+            <form className="flex gap-2">
+              <input name="q" defaultValue={q} placeholder="Szukaj: nazwa lub CAS" className="field w-64" />
+              <button className="btn-outline">Szukaj</button>
+            </form>
+            {hasRole(user.role, 'EDITOR') && (
+              <Link href="/substancje/import" className="btn-outline">
+                Import z zał. VI CLP
+              </Link>
+            )}
+          </div>
         </div>
 
         {hasRole(user.role, 'EDITOR') && <NewSubstanceForm />}

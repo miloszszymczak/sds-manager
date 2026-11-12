@@ -7,11 +7,22 @@ describe('etykieta — dobór zwrotów P', () => {
     expect(selectPrecautionary(codes)).toEqual(codes);
   });
 
-  it('ogranicza do maksimum i bierze z różnych grup', () => {
-    const codes = ['P201', 'P202', 'P260', 'P273', 'P280', 'P302+P352', 'P305+P351+P338', 'P391', 'P501'];
+  it('D-76 część A: zachowuje pierwszą pomoc i ochronę, pomija ogólne zapobieganie', () => {
+    const codes = ['P201', 'P202', 'P260', 'P273', 'P280', 'P302+P352', 'P305+P351+P338', 'P308+P313', 'P391', 'P501'];
+    expect(selectPrecautionary(codes)).toEqual(['P201', 'P280', 'P302+P352', 'P305+P351+P338', 'P308+P313', 'P501']);
+  });
+
+  it('wynik nigdy nie przekracza maksimum i zachowuje kolejność z karty', () => {
+    const codes = ['P501', 'P280', 'P264', 'P270', 'P273', 'P301+P312', 'P330', 'P391', 'P405', 'P403+P233'];
     const picked = selectPrecautionary(codes);
     expect(picked.length).toBe(MAX_PRECAUTIONARY);
-    expect(picked).toContain('P501'); // grupa USUWANIE reprezentowana
+    expect(picked).toEqual(codes.filter((c) => picked.includes(c)));
+    expect(picked).toContain('P301+P312');
+  });
+
+  it('usuwa zwroty zbędne nawet poniżej limitu', () => {
+    expect(selectPrecautionary(['P201', 'P202', 'P352', 'P302+P352'])).toEqual(['P201', 'P302+P352']);
+    expect(selectPrecautionary(['P202'])).toEqual(['P202']);
   });
 });
 
